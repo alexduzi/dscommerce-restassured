@@ -1,22 +1,61 @@
 package com.alexduzi.dscommerce.controllers;
 
+import io.restassured.http.ContentType;
+import io.restassured.mapper.ObjectMapperType;
+import org.json.simple.JSONObject;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import static io.restassured.RestAssured.baseURI;
-import static io.restassured.RestAssured.given;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
+
+import static com.alexduzi.dscommerce.util.TokenUtil.obtainAccessToken;
+import static io.restassured.RestAssured.*;
+import static io.restassured.matcher.RestAssuredMatchers.*;
 import static org.hamcrest.Matchers.*;
+import java.util.List;
 
 public class ProductControllerRA {
 
     private Long existingProductId, nonExistingProductId;
     private String productName;
+    private Map<String, Object> postProductInstance;
+    private String clientUsername, clientPassword, adminUsername, adminPassword;
+    private String clientToken, adminToken, invalidToken;
 
     @BeforeEach
     public void setUp() {
         baseURI = "http://localhost:8080";
 
         productName = "Macbook";
+
+        postProductInstance = new HashMap<>();
+
+        postProductInstance.put("name", "Meu produto");
+        postProductInstance.put("description", "Meu produto description");
+        postProductInstance.put("imgUrl", "imgUrl");
+        postProductInstance.put("price", 50.0);
+
+        List<Map<String, Object>> categories = new ArrayList<>();
+        Map<String, Object> category1 = new HashMap<>();
+        category1.put("id", 1);
+        Map<String, Object> category2 = new HashMap<>();
+        category2.put("id", 2);
+        categories.add(category1);
+        categories.add(category2);
+
+        postProductInstance.put("categories", categories);
+
+        clientUsername = "maria@gmail.com";
+        clientPassword = "123456";
+        adminUsername = "alex@gmail.com";
+        adminPassword = "123456";
+
+        clientToken = obtainAccessToken(clientUsername, clientPassword);
+        adminToken = obtainAccessToken(adminUsername, adminPassword);
+        invalidToken = adminToken + "xpto";
     }
 
     @Test
@@ -62,5 +101,26 @@ public class ProductControllerRA {
                 .then()
                 .statusCode(200)
                 .body("content.findAll { it.price > 2000 }.name", hasItems("Smart TV", "PC Gamer Weed"));
+    }
+
+    @Test
+    public void insertShouldReturnProductCreatedWhenAdminLogged() {
+        JSONObject newProduct = new JSONObject(postProductInstance);
+
+        given()
+                .header("Content-type", "application/json")
+                .header("Authorization", "Bearer " + adminToken)
+                .body(newProduct)
+                .contentType(ContentType.JSON)
+                .accept(ContentType.JSON)
+                .when()
+                .post("/products")
+                .then()
+                .statusCode(201)
+                .body("name", equalTo("Meu produto"))
+                .body("price", is(50.0F))
+                .body("imgUrl", equalTo("imgUrl"))
+                .body("categories.id", hasItems(1,2));
+
     }
 }
