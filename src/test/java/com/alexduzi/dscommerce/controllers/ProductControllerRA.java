@@ -252,4 +252,79 @@ public class ProductControllerRA {
                 .statusCode(401);
 
     }
+
+    @Test
+    public void deleteShouldReturnNoContentWhenAdminUserLogged() {
+
+        given()
+                .header("Content-type", "application/json")
+                .header("Authorization", "Bearer " + adminToken)
+                .contentType(ContentType.JSON)
+                .accept(ContentType.JSON)
+                .when()
+                .delete("/products/{id}", 7L)
+                .then()
+                .statusCode(204);
+
+    }
+
+    @Test
+    public void deleteShouldReturnNotFoundWhenAdminUserLogged() {
+
+        given()
+                .header("Content-type", "application/json")
+                .header("Authorization", "Bearer " + adminToken)
+                .contentType(ContentType.JSON)
+                .accept(ContentType.JSON)
+                .when()
+                .delete("/products/{id}", 7L)
+                .then()
+                .statusCode(404);
+
+    }
+
+    @Test
+    public void deleteShouldReturnBadRequestWhenAdminUserLogged() {
+
+        given()
+                .header("Content-type", "application/json")
+                .header("Authorization", "Bearer " + adminToken)
+                .contentType(ContentType.JSON)
+                .accept(ContentType.JSON)
+                .when()
+                .delete("/products/{id}", 1L)
+                .then()
+                .statusCode(400);
+
+    }
+
+    @Test
+    public void deleteShouldReturnForbiddenWhenClientUserLogged() {
+
+        given()
+                .header("Content-type", "application/json")
+                .header("Authorization", "Bearer " + clientToken)
+                .contentType(ContentType.JSON)
+                .accept(ContentType.JSON)
+                .when()
+                .delete("/products/{id}", 8L)
+                .then()
+                .statusCode(403);
+
+    }
+
+    @Test
+    public void deleteShouldReturnUnauthorizedWhenUserNotLogged() {
+
+        given()
+                .header("Content-type", "application/json")
+                .header("Authorization", "Bearer " + invalidToken)
+                .contentType(ContentType.JSON)
+                .accept(ContentType.JSON)
+                .when()
+                .delete("/products/{id}", 8L)
+                .then()
+                .statusCode(401);
+
+    }
 }
